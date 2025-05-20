@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation Bar -->
+    <nav class="bg-gray-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-xl font-semibold">Admin Dashboard</span>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/admin/dashboard" class="text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium">
+                        Dashboard
+                    </a>
+                    <a href="/admin/users" class="text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium">
+                        Users
+                    </a>
+                    <a href="/admin/posts" class="text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium">
+                        Posts
+                    </a>
+                    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content Area -->
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Status message -->
+        <div id="statusMessage" class="hidden mb-6 p-4 rounded-lg"></div>
+        
+        <!-- Stats Section -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white shadow rounded-lg p-6 text-center">
+                <h3 class="text-lg font-semibold text-gray-700">Total Users</h3>
+                <p id="totalUsers" class="text-3xl font-bold text-blue-600">0</p>
+            </div>
+            <div class="bg-white shadow rounded-lg p-6 text-center">
+                <h3 class="text-lg font-semibold text-gray-700">Active Users</h3>
+                <p id="activeUsers" class="text-3xl font-bold text-green-600">0</p>
+            </div>
+            <div class="bg-white shadow rounded-lg p-6 text-center">
+                <h3 class="text-lg font-semibold text-gray-700">Blocked Users</h3>
+                <p id="blockedUsers" class="text-3xl font-bold text-red-600">0</p>
+            </div>
+            <div class="bg-white shadow rounded-lg p-6 text-center">
+                <h3 class="text-lg font-semibold text-gray-700">Total Posts</h3>
+                <p id="totalPosts" class="text-3xl font-bold text-purple-600">0</p>
+            </div>
+        </div>
+        
+        <!-- User Search -->
+        <div class="mb-6">
+            <div class="flex space-x-2">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search users by name or email..." 
+                    class="flex-grow p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                <button 
+                    onclick="searchUsers()" 
+                    class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                >
+                    Search
+                </button>
+                <button 
+                    onclick="fetchUsers()" 
+                    class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
+                >
+                    Reset
+                </button>
+            </div>
+        </div>
+        
+        <!-- Users Section -->
+        <h2 class="text-2xl font-semibold mb-4">User Management</h2>
+        <div id="usersList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Users will be dynamically added here -->
+            <div class="bg-white shadow rounded-lg p-4">
+                <div class="animate-pulse flex flex-col">
+                    <div class="rounded-full bg-gray-200 h-16 w-16 mb-2 mx-auto"></div>
+                    <div class="h-4 bg-gray-200 rounded w-3/4 mb-1 mx-auto"></div>
+                    <div class="h-3 bg-gray-200 rounded w-1/2 mb-3 mx-auto"></div>
+                    <div class="h-3 bg-gray-200 rounded w-full mb-1"></div>
+                    <div class="h-3 bg-gray-200 rounded w-full mb-1"></div>
+                    <div class="h-3 bg-gray-200 rounded w-full mb-3"></div>
+                    <div class="h-8 bg-gray-200 rounded w-full"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="mt-6 flex justify-center">
+            <div class="flex space-x-2" id="pagination">
+                <!-- Pagination will be dynamically added here -->
+            </div>
+        </div>
+        
+        <!-- User Details Modal -->
+        <div id="userDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-lg p-6 w-full max-w-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">User Details</h3>
+                    <button onclick="closeUserDetailsModal()" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div id="userDetailsContent" class="space-y-4">
+                    <!-- User details will be dynamically added here -->
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="closeUserDetailsModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if admin is logged in
+        const admin = JSON.parse(localStorage.getItem('admin'));
+        if (!admin) {
+            window.location.href = '/admin/login';
+        }
+        
+        // Show status message
+        function showStatus(message, isError = false) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = isError 
+                ? 'block mb-6 p-4 bg-red-100 text-red-700 rounded-lg'
+                : 'block mb-6 p-4 bg-green-100 text-green-700 rounded-lg';
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                statusEl.className = 'hidden mb-6 p-4 rounded-lg';
+            }, 5000);
+        }
+        
+        // Fetch dashboard stats
+        async function fetchStats() {
+            try {
+                const response = await fetch('/api/admin/stats');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch stats');
+                }
+                
+                const stats = await response.json();
+                
+                // Update stats in UI
+               // Update stats in UI
+document.getElementById('totalUsers').textContent = stats.totalUsers;
+document.getElementById('activeUsers').textContent = stats.activeUsers;
+document.getElementById('blockedUsers').textContent = stats.blockedUsers;
+document.getElementById('totalPosts').textContent = stats.totalPosts;
+
+                
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+                showStatus('Error loading statistics. Please try again later.', true);
+            }
+        }
+        
+        // Fetch users with pagination
+        let currentPage = 1;
+        const usersPerPage = 9;
+        
+        async function fetchUsers(page = 1) {
+            try {
+                currentPage = page;
+                const response = await fetch(`/api/admin/users?page=${page}&limit=${usersPerPage}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch users');
+                }
+                
+                const data = await response.json();
+                renderUsers(data.users);
+                renderPagination(data.totalPages, page);
+                
+            } catch (error) {
+                console.error('Error fetching users:', error);
+                showStatus('Error loading users. Please try again later.', true);
+            }
+        }
+        
+        // Search users
+        async function searchUsers() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            if (!searchTerm) {
+                fetchUsers();
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/users/search?term=${encodeURIComponent(searchTerm)}`);
+                if (!response.ok) {
+                    throw new Error('Failed to search users');
+                }
+                
+                const data = await response.json();
+                renderUsers(data.users);
+                
+                // Hide pagination for search results
+                document.getElementById('pagination').innerHTML = '';
+                
+            } catch (error) {
+                console.error('Error searching users:', error);
+                showStatus('Error searching users. Please try again later.', true);
+            }
+        }
+        
+        // Render users list
+        function renderUsers(users) {
+            const usersList = document.getElementById('usersList');
+            
+            if (users.length === 0) {
+                usersList.innerHTML = '<div class="col-span-full bg-white shadow rounded-lg p-6 text-center text-gray-500">No users found.</div>';
+                return;
+            }
+            
+            usersList.innerHTML = users.map(user => `
+                <div class="bg-white shadow rounded-lg p-4">
+                    <div class="flex flex-col items-center mb-4">
+                        <img class="h-16 w-16 rounded-full object-cover mb-2" 
+                             src="${user.profilePicture || '/images/default-avatar.png'}">
+                        <h3 class="font-semibold text-lg">${user.name}</h3>
+                        <p class="text-gray-500 text-sm">${user.email}</p>
+                    </div>
+                    
+                    <div class="space-y-1 mb-4">
+                        <p class="text-sm"><span class="font-medium">Phone:</span> ${user.phoneNumber}</p>
+                        <p class="text-sm"><span class="font-medium">Country:</span> ${user.country}</p>
+                        <p class="text-sm"><span class="font-medium">Gender:</span> ${user.gender}</p>
+                        <p class="text-sm"><span class="font-medium">Joined:</span> ${new Date(user.createdAt).toLocaleDateString()}</p>
+                        <p class="text-sm"><span class="font-medium">Status:</span> 
+                            <span class="${user.isBlocked ? 'text-red-500' : 'text-green-500'}">
+                                ${user.isBlocked ? 'Blocked' : 'Active'}
+                            </span>
+                        </p>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button onclick="viewUserDetails('${user._id}')" class="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg hover:bg-blue-600 text-sm">
+                            View Details
+                        </button>
+                        ${user.isBlocked ? 
+                            `<button onclick="unblockUser('${user._id}')" class="flex-1 bg-green-500 text-white py-2 px-3 rounded-lg hover:bg-green-600 text-sm">
+                                Unblock
+                            </button>` : 
+                            `<button onclick="blockUser('${user._id}')" class="flex-1 bg-red-500 text-white py-2 px-3 rounded-lg hover:bg-red-600 text-sm">
+                                Block
+                            </button>`
+                        }
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Render pagination
+        function renderPagination(totalPages, currentPage) {
+            const pagination = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            
+            let paginationHTML = '';
+            
+            // Previous button
+            paginationHTML += `
+                <button 
+                    onclick="fetchUsers(${Math.max(1, currentPage - 1)})" 
+                    class="px-3 py-1 rounded-md ${currentPage === 1 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}"
+                    ${currentPage === 1 ? 'disabled' : ''}
+                >
+                    Previous
+                </button>
+            `;
+            
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `
+                    <button 
+                        onclick="fetchUsers(${i})" 
+                        class="px-3 py-1 rounded-md ${currentPage === i ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}"
+                    >
+                        ${i}
+                    </button>
+                `;
+            }
+            
+            // Next button
+            paginationHTML += `
+                <button 
+                    onclick="fetchUsers(${Math.min(totalPages, currentPage + 1)})" 
+                    class="px-3 py-1 rounded-md ${currentPage === totalPages ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}"
+                                      ${currentPage === totalPages ? 'disabled' : ''}
+                >
+                    Next
+                </button>
+            `;
+            
+            pagination.innerHTML = paginationHTML;
+        }
+        
+        // View user details
+        async function viewUserDetails(userId) {
+            try {
+                const response = await fetch(`/api/admin/users/${userId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user details');
+                }
+                
+                const user = await response.json();
+                
+                // Format date of birth
+                const dob = new Date(user.dateOfBirth).toLocaleDateString();
+                
+                // Get user's posts count
+                const postsResponse = await fetch(`/api/admin/users/${userId}/posts-count`);
+                const postsData = await postsResponse.json();
+                
+                const userDetailsContent = document.getElementById('userDetailsContent');
+                userDetailsContent.innerHTML = `
+                    <div class="flex flex-col items-center mb-4">
+                        <img class="h-24 w-24 rounded-full object-cover mb-2" 
+                             src="${user.profilePicture || '/images/default-avatar.png'}">
+                        <h3 class="font-semibold text-xl">${user.name}</h3>
+                        <p class="text-gray-500">${user.email}</p>
+                        <div class="mt-2">
+                            <span class="px-2 py-1 rounded-full text-xs ${user.isBlocked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
+                                ${user.isBlocked ? 'Blocked' : 'Active'}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Phone Number</p>
+                            <p>${user.phoneNumber}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Country</p>
+                            <p>${user.country}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Gender</p>
+                            <p>${user.gender}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Date of Birth</p>
+                            <p>${dob}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Joined</p>
+                            <p>${new Date(user.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Posts</p>
+                            <p>${postsData.count}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex justify-center">
+                        ${user.isBlocked ? 
+                            `<button onclick="unblockUser('${user._id}', true)" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">
+                                Unblock User
+                            </button>` : 
+                            `<button onclick="blockUser('${user._id}', true)" class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600">
+                                Block User
+                            </button>`
+                        }
+                    </div>
+                `;
+                
+                // Show modal
+                document.getElementById('userDetailsModal').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Error fetching user details:', error);
+                showStatus('Error loading user details. Please try again later.', true);
+            }
+        }
+        
+        // Close user details modal
+        function closeUserDetailsModal() {
+            document.getElementById('userDetailsModal').classList.add('hidden');
+        }
+        
+        // Block user
+        async function blockUser(userId, refreshDetails = false) {
+            if (confirm('Are you sure you want to block this user?')) {
+                try {
+                    const response = await fetch(`/api/admin/users/${userId}/block`, {
+                        method: 'PUT'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to block user');
+                    }
+                    
+                    showStatus('User blocked successfully');
+                    
+                    // Refresh data
+                    fetchStats();
+                    
+                    if (refreshDetails) {
+                        viewUserDetails(userId);
+                    } else {
+                        fetchUsers(currentPage);
+                    }
+                    
+                } catch (error) {
+                    console.error('Error blocking user:', error);
+                    showStatus('Error blocking user. Please try again later.', true);
+                }
+            }
+        }
+        
+        // Unblock user
+        async function unblockUser(userId, refreshDetails = false) {
+            if (confirm('Are you sure you want to unblock this user?')) {
+                try {
+                    const response = await fetch(`/api/admin/users/${userId}/unblock`, {
+                        method: 'PUT'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to unblock user');
+                    }
+                    
+                    showStatus('User unblocked successfully');
+                    
+                    // Refresh data
+                    fetchStats();
+                    
+                    if (refreshDetails) {
+                        viewUserDetails(userId);
+                    } else {
+                        fetchUsers(currentPage);
+                    }
+                    
+                } catch (error) {
+                    console.error('Error unblocking user:', error);
+                    showStatus('Error unblocking user. Please try again later.', true);
+                }
+            }
+        }
+        
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('admin');
+            window.location.href = '/admin/login';
+        });
+        
+        // Initialize page
+        fetchStats();
+        fetchUsers();
+    </script>
+</body>
+</html>
